@@ -1,10 +1,12 @@
 {
   "name": "tcc",
   "version": "1.0.0",
-  "type": "module",
-  "main": "index.js",
+  "main": "./out/main/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "",
@@ -12,8 +14,21 @@
   "description": "",
   "devDependencies": {
     "@types/node": "^25.8.0",
-    "prisma": "^7.8.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "electron": "^41.6.1",
+    "electron-vite": "^5.0.0",
+    "prisma": "^6.19.3",
     "ts-node": "^10.9.2",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vite": "^8.0.13"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "dotenv": "^17.4.2",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-router-dom": "^7.15.1"
   }
 }

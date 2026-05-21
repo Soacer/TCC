@@ -1,13 +1,57 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// prisma/schema.prisma
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum StatusEquipamento {
+  OPERANDO
+  PARADO
+  EM_MANUTENCAO
+  FALHA
+}
+
+model abc {
+  idcriticidade Int           @id @default(autoincrement())
+  nivel         String        @unique @db.VarChar(1)
+  equipamentos  Equipamento[]
+}
+
+model xyz {
+  idxyz        Int           @id @default(autoincrement())
+  nivel        String        @unique @db.VarChar(1)
+  equipamentos Equipamento[]
+}
+
+model Equipamento {
+  idequipamentos    String            @id @default(uuid()) @db.Uuid
+  nome              String            @db.VarChar(45)
+  tag               String            @unique @db.VarChar(45)
+  fabricante        String            @db.VarChar(45)
+  modelo            String            @db.VarChar(45)
+  setor             String            @db.VarChar(45)
+  data_instalacao   DateTime
+  status            StatusEquipamento @default(OPERANDO)
+  abc_idcriticidade Int
+  xyz_idxyz         Int
+  abc               abc               @relation(fields: [abc_idcriticidade], references: [idcriticidade])
+  xyz               xyz               @relation(fields: [xyz_idxyz], references: [idxyz])
+  isActive          Boolean           @default(true)
+  falhas            Falha[]
+}
+
+model Falha {
+  idfalhas                    String      @id @default(uuid()) @db.Uuid
+  data_hora_falha             DateTime    @default(now())
+  data_hora_reparo            DateTime?
+  descricao                   String      @db.Text
+  causa_raiz                  String?     @db.Text
+  tempo_parada_horas          Float?
+  equipamentos_idequipamentos String      @db.Uuid
+  equipamento                 Equipamento @relation(fields: [equipamentos_idequipamentos], references: [idequipamentos])
 }
