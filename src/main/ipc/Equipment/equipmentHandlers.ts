@@ -1,10 +1,12 @@
 import { ipcMain } from 'electron';
-import { EquipmentRepository } from '../../repositories/Equipments/EquipmentRepository';
-import { CreateEquipmentUseCase } from '../../useCases/Equipments/CreateEquipmentUseCase';
-import { SelectAllEquipmentUseCase } from '../../useCases/Equipments/SelectAllEquipmentUseCase';
-import { SoftDeleteEquipmentUseCase } from '../../useCases/Equipments/SoftDeleteEquipmentUseCase';
+import { EquipmentRepository } from '../../repositories/Equipment/EquipmentRepository';
+import { CreateEquipmentUseCase } from '../../useCases/Equipment/CreateEquipmentUseCase';
+import { SelectAllEquipmentUseCase } from '../../useCases/Equipment/SelectAllEquipmentUseCase';
+import { SoftDeleteEquipmentUseCase } from '../../useCases/Equipment/SoftDeleteEquipmentUseCase';
 
 import type { CreateEquipmentDTO } from '../../../shared/dto/CreateEquipmentDTO';
+import { UpdateEquipmentUseCase } from '../../useCases/Equipment/UpdateEquipmentUseCase';
+import { ReactivateEquipmentUseCase } from '../../useCases/Equipment/ReactivateEquipmentUseCase';
 
 
 export function registerEquipmentHandlers() {
@@ -48,4 +50,30 @@ export function registerEquipmentHandlers() {
       return { success: false, error: error.message };
     }
   });
+
+  ipcMain.handle('update-equipment', async (_, id: string, data: any) => {
+    try {
+      const repository = new EquipmentRepository();
+      const useCase = new UpdateEquipmentUseCase(repository);
+      
+      const updatedEquipment = await useCase.execute(id, data);
+      
+      return { success: true, data: updatedEquipment };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('reactivate-equipment', async (_, id: string) => {
+  try {
+    const repository = new EquipmentRepository();
+    const useCase = new ReactivateEquipmentUseCase(repository);
+    
+    await useCase.execute(id);
+    
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+});
 }

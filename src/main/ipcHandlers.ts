@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
-import { EquipmentRepository } from './repositories/Equipments/EquipmentRepository';
-import { CreateEquipmentUseCase } from './useCases/Equipments/CreateEquipmentUseCase';
+import { EquipmentRepository } from './repositories/Equipment/EquipmentRepository';
+import { CreateEquipmentUseCase } from './useCases/Equipment/CreateEquipmentUseCase';
 
 const repo = new EquipmentRepository();
 const createUseCase = new CreateEquipmentUseCase(repo);

@@ -24,9 +24,8 @@ let electron = require("electron");
 let node_path = require("node:path");
 node_path = __toESM(node_path);
 let node_url = require("node:url");
-let _prisma_client = require("@prisma/client");
 //#region src/main/database/prisma.ts
-var prisma = new _prisma_client.PrismaClient();
+var prisma = new (require("@prisma/client")).PrismaClient();
 async function connectDb() {
 	try {
 		await prisma.$connect();
@@ -46,7 +45,7 @@ var EquipmentRepository = class {
 			modelo: data.modelo,
 			setor: data.setor,
 			data_instalacao: data.data_instalacao,
-			status: _prisma_client.StatusEquipamento.OPERANDO,
+			status: "OPERANDO",
 			abc_idcriticidade: data.idcriticidade,
 			xyz_idxyz: data.idxyz
 		} });
@@ -64,6 +63,26 @@ var EquipmentRepository = class {
 		return await prisma.equipamento.update({
 			where: { idequipamentos: id },
 			data: { isActive: false }
+		});
+	}
+	async update(id, data) {
+		return await prisma.equipamento.update({
+			where: { idequipamentos: id },
+			data: {
+				nome: data.nome,
+				tag: data.tag,
+				fabricante: data.fabricante,
+				modelo: data.modelo,
+				setor: data.setor,
+				abc_idcriticidade: data.idcriticidade,
+				xyz_idxyz: data.idxyz
+			}
+		});
+	}
+	async reactivate(id) {
+		return await prisma.equipamento.update({
+			where: { idequipamentos: id },
+			data: { isActive: true }
 		});
 	}
 };
@@ -106,6 +125,28 @@ var SoftDeleteEquipmentUseCase = class {
 	}
 };
 //#endregion
+//#region src/main/useCases/Equipments/UpdateEquipmentUseCase.ts
+var UpdateEquipmentUseCase = class {
+	repository;
+	constructor(repository) {
+		this.repository = repository;
+	}
+	async execute(id, data) {
+		return await this.repository.update(id, data);
+	}
+};
+//#endregion
+//#region src/main/useCases/Equipments/ReactivateEquipmentUseCase.ts
+var ReactivateEquipmentUseCase = class {
+	repository;
+	constructor(repository) {
+		this.repository = repository;
+	}
+	async execute(id) {
+		return await this.repository.reactivate(id);
+	}
+};
+//#endregion
 //#region src/main/ipc/Equipment/equipmentHandlers.ts
 function registerEquipmentHandlers() {
 	electron.ipcMain.handle("create-equipment", async (_, data) => {
@@ -137,6 +178,30 @@ function registerEquipmentHandlers() {
 	electron.ipcMain.handle("soft-delete-equipment", async (_, id) => {
 		try {
 			await new SoftDeleteEquipmentUseCase(new EquipmentRepository()).execute(id);
+			return { success: true };
+		} catch (error) {
+			return {
+				success: false,
+				error: error.message
+			};
+		}
+	});
+	electron.ipcMain.handle("update-equipment", async (_, id, data) => {
+		try {
+			return {
+				success: true,
+				data: await new UpdateEquipmentUseCase(new EquipmentRepository()).execute(id, data)
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: error.message
+			};
+		}
+	});
+	electron.ipcMain.handle("reactivate-equipment", async (_, id) => {
+		try {
+			await new ReactivateEquipmentUseCase(new EquipmentRepository()).execute(id);
 			return { success: true };
 		} catch (error) {
 			return {

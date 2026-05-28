@@ -29,9 +29,9 @@ async function main() {
     const niveisABC = ['A', 'B', 'C'];
     for (const nivel of niveisABC) {
       await prisma.abc.upsert({
-        where: { nivel: nivel as any },
+        where: { nivel: nivel },
         update: {},
-        create: { nivel: nivel as any }
+        create: { nivel: nivel }
       });
     }
 
@@ -39,17 +39,17 @@ async function main() {
     const niveisXYZ = ['X', 'Y', 'Z'];
     for (const nivel of niveisXYZ) {
       await prisma.xyz.upsert({
-        where: { nivel: nivel as any },
+        where: { nivel: nivel },
         update: {},
-        create: { nivel: nivel as any }
+        create: { nivel: nivel }
       });
     }
 
     console.log('✅ Categorias ABC e XYZ prontas.');
 
     // 3. Criando Equipamento de Teste (BOMBA-001)
-    const catA = await prisma.abc.findFirst({ where: { nivel: 'A' as any } });
-    const catX = await prisma.xyz.findFirst({ where: { nivel: 'X' as any } });
+    const catA = await prisma.abc.findFirst({ where: { nivel: 'A' } });
+    const catX = await prisma.xyz.findFirst({ where: { nivel: 'X' } });
 
     if (catA && catX) {
       await prisma.equipamento.upsert({

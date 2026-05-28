@@ -5,53 +5,46 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url = env("DATABASE_URL")
-}
-
-enum StatusEquipamento {
-  OPERANDO
-  PARADO
-  EM_MANUTENCAO
-  FALHA
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model abc {
   idcriticidade Int           @id @default(autoincrement())
-  nivel         String        @unique @db.VarChar(1)
+  nivel         String        @unique
   equipamentos  Equipamento[]
 }
 
 model xyz {
   idxyz        Int           @id @default(autoincrement())
-  nivel        String        @unique @db.VarChar(1)
+  nivel        String        @unique
   equipamentos Equipamento[]
 }
 
 model Equipamento {
-  idequipamentos    String            @id @default(uuid()) @db.Uuid
-  nome              String            @db.VarChar(45)
-  tag               String            @unique @db.VarChar(45)
-  fabricante        String            @db.VarChar(45)
-  modelo            String            @db.VarChar(45)
-  setor             String            @db.VarChar(45)
+  idequipamentos    String        @id @default(uuid())
+  nome              String
+  tag               String        @unique
+  fabricante        String
+  modelo            String
+  setor             String
   data_instalacao   DateTime
-  status            StatusEquipamento @default(OPERANDO)
+  status            String        @default("OPERANDO")
   abc_idcriticidade Int
   xyz_idxyz         Int
-  abc               abc               @relation(fields: [abc_idcriticidade], references: [idcriticidade])
-  xyz               xyz               @relation(fields: [xyz_idxyz], references: [idxyz])
-  isActive          Boolean           @default(true)
+  abc               abc           @relation(fields: [abc_idcriticidade], references: [idcriticidade])
+  xyz               xyz           @relation(fields: [xyz_idxyz], references: [idxyz])
+  isActive          Boolean       @default(true)
   falhas            Falha[]
 }
 
 model Falha {
-  idfalhas                    String      @id @default(uuid()) @db.Uuid
+  idfalhas                    String      @id @default(uuid())
   data_hora_falha             DateTime    @default(now())
   data_hora_reparo            DateTime?
-  descricao                   String      @db.Text
-  causa_raiz                  String?     @db.Text
+  descricao                   String
+  causa_raiz                  String?
   tempo_parada_horas          Float?
-  equipamentos_idequipamentos String      @db.Uuid
+  equipamentos_idequipamentos String
   equipamento                 Equipamento @relation(fields: [equipamentos_idequipamentos], references: [idequipamentos])
 }

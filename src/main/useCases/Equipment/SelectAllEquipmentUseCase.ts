@@ -1,4 +1,4 @@
-import { EquipmentRepository } from "../../repositories/Equipments/EquipmentRepository";
+import { EquipmentRepository } from "../../repositories/Equipment/EquipmentRepository";
 
 export class SelectAllEquipmentUseCase {
   constructor(private equipmentRepository: EquipmentRepository) {}

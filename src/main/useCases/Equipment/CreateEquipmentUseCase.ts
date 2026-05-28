@@ -1,4 +1,4 @@
-import { EquipmentRepository } from '../../repositories/Equipments/EquipmentRepository';
+import { EquipmentRepository } from '../../repositories/Equipment/EquipmentRepository';
 import type { CreateEquipmentDTO } from '../../../shared/dto/CreateEquipmentDTO';
 
 export class CreateEquipmentUseCase {

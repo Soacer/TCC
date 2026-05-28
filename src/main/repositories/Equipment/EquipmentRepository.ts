@@ -1,7 +1,6 @@
-import { prisma } from '../../database/prisma';
-import { StatusEquipamento } from '@prisma/client';
+import { prisma } from "../../database/prisma";
 
-import type { CreateEquipmentDTO } from '../../../shared/dto/CreateEquipmentDTO';
+import type { CreateEquipmentDTO } from "../../../shared/dto/CreateEquipmentDTO";
 
 export class EquipmentRepository {
   async create(data: CreateEquipmentDTO) {
@@ -13,10 +12,10 @@ export class EquipmentRepository {
         modelo: data.modelo,
         setor: data.setor,
         data_instalacao: data.data_instalacao,
-        status: StatusEquipamento.OPERANDO,
+        status: "OPERANDO",
         abc_idcriticidade: data.idcriticidade,
         xyz_idxyz: data.idxyz,
-      }
+      },
     });
   }
 
@@ -28,15 +27,37 @@ export class EquipmentRepository {
     return await prisma.equipamento.findMany({
       include: {
         abc: true,
-        xyz: true
-      }
+        xyz: true,
+      },
     });
   }
 
   async softDelete(id: string) {
     return await prisma.equipamento.update({
       where: { idequipamentos: id },
-      data: { isActive: false }
+      data: { isActive: false },
+    });
+  }
+
+  async update(id: string, data: any) {
+    return await prisma.equipamento.update({
+      where: { idequipamentos: id },
+      data: {
+        nome: data.nome,
+        tag: data.tag,
+        fabricante: data.fabricante,
+        modelo: data.modelo,
+        setor: data.setor,
+        abc_idcriticidade: data.idcriticidade,
+        xyz_idxyz: data.idxyz,
+      },
+    });
+  }
+
+  async reactivate(id: string) {
+    return await prisma.equipamento.update({
+      where: { idequipamentos: id },
+      data: { isActive: true }
     });
   }
 }

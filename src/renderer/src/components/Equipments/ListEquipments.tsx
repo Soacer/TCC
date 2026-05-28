@@ -4,6 +4,10 @@ export function ListEquipments() {
   const [equipamentos, setEquipamentos] = useState<any[]>([]);
   const [mostrarApenasAtivos, setMostrarApenasAtivos] = useState(true); // O filtro local
   const [loading, setLoading] = useState(true);
+  const [equipamentoEmEdicao, setEquipamentoEmEdicao] = useState<any | null>(
+    null,
+  );
+  const [formData, setFormData] = useState<any>({});
 
   // Busca TODOS os equipamentos no banco de dados apenas uma vez
   const fetchEquipamentos = async () => {
@@ -31,6 +35,19 @@ export function ListEquipments() {
         fetchEquipamentos(); // Recarrega para atualizar o status visual
       } else {
         alert("Erro ao desativar: " + response.error);
+      }
+    }
+  };
+
+  const handleReactivate = async (id: string, tag: string) => {
+    const confirmar = window.confirm(`Deseja reativar o equipamento ${tag}?`);
+    if (confirmar) {
+      // @ts-ignore
+      const response = await window.api.reactivateEquipment(id);
+      if (response.success) {
+        fetchEquipamentos(); // Recarrega os dados da tabela
+      } else {
+        alert("Erro ao reativar: " + response.error);
       }
     }
   };
@@ -182,13 +199,19 @@ export function ListEquipments() {
                       justifyContent: "center",
                     }}
                   >
-                    {/* Botão Editar (Deixado pronto para a próxima etapa) */}
                     <button
-                      onClick={() =>
-                        alert(
-                          `A tela de edição do ${eq.tag} será construída aqui!`,
-                        )
-                      }
+                      onClick={() => {
+                        setEquipamentoEmEdicao(eq);
+                        setFormData({
+                          nome: eq.nome,
+                          tag: eq.tag,
+                          fabricante: eq.fabricante,
+                          modelo: eq.modelo,
+                          setor: eq.setor,
+                          idcriticidade: eq.abc_idcriticidade,
+                          idxyz: eq.xyz_idxyz,
+                        });
+                      }}
                       style={{
                         padding: "6px 12px",
                         cursor: "pointer",
@@ -202,8 +225,8 @@ export function ListEquipments() {
                       ✏️ Editar
                     </button>
 
-                    {/* Botão de Soft Delete */}
-                    {eq.isActive && (
+                    {/* RENDERIZAÇÃO CONDICIONAL: Se ativo, mostra botão de desativar. Se inativo, mostra reativar */}
+                    {eq.isActive ? (
                       <button
                         onClick={() =>
                           handleSoftDelete(eq.idequipamentos, eq.tag)
@@ -220,6 +243,23 @@ export function ListEquipments() {
                       >
                         🗑️ Desativar
                       </button>
+                    ) : (
+                      <button
+                        onClick={() =>
+                          handleReactivate(eq.idequipamentos, eq.tag)
+                        }
+                        style={{
+                          padding: "6px 12px",
+                          cursor: "pointer",
+                          backgroundColor: "#2e7d32",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "4px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        🔄 Reativar
+                      </button>
                     )}
                   </td>
                 </tr>
@@ -227,6 +267,126 @@ export function ListEquipments() {
             )}
           </tbody>
         </table>
+      )}
+      {/* --- MODAL DE EDIÇÃO RÁPIDA --- */}
+      {equipamentoEmEdicao && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.6)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "30px",
+              borderRadius: "8px",
+              width: "400px",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            }}
+          >
+            <h3 style={{ marginTop: 0 }}>Editar Equipamento</h3>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+                marginBottom: "20px",
+              }}
+            >
+              <label>
+                Nome:
+                <input
+                  type="text"
+                  value={formData.nome || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, nome: e.target.value })
+                  }
+                  style={{ width: "100%", padding: "8px", marginTop: "4px" }}
+                />
+              </label>
+              <label>
+                TAG:
+                <input
+                  type="text"
+                  value={formData.tag || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, tag: e.target.value })
+                  }
+                  style={{ width: "100%", padding: "8px", marginTop: "4px" }}
+                />
+              </label>
+              <label>
+                Setor:
+                <input
+                  type="text"
+                  value={formData.setor || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, setor: e.target.value })
+                  }
+                  style={{ width: "100%", padding: "8px", marginTop: "4px" }}
+                />
+              </label>
+              {/* Você pode adicionar os outros campos (Fabricante, Modelo) seguindo o mesmo padrão */}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+              }}
+            >
+              <button
+                onClick={() => setEquipamentoEmEdicao(null)}
+                style={{
+                  padding: "8px 16px",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+
+              <button
+                onClick={async () => {
+                  // @ts-ignore
+                  const response = await window.api.updateEquipment(
+                    equipamentoEmEdicao.idequipamentos,
+                    formData,
+                  );
+                  if (response.success) {
+                    setEquipamentoEmEdicao(null); // Fecha o modal
+                    fetchEquipamentos(); // Recarrega a tabela com os novos dados
+                  } else {
+                    alert("Erro ao atualizar: " + response.error);
+                  }
+                }}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#2ecc71",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                }}
+              >
+                Salvar Alterações
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
