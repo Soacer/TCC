@@ -66,7 +66,8 @@ model Plano {
   idplanos           String             @id @default(uuid())
   tipo_manutencao    String             // Ex: PREVENTIVA, PREDITIVA
   periocidade_dias   Int                // Ex: 30, 90, 365
-  
+  isActive            Boolean            @default(true)
+
   tarefas            Tarefa[]           // Ligação 1:N com as Tarefas
   equipamentos       EquipamentoTemPlano[] // Ligação 1:N com a tabela intermediária
   
@@ -92,7 +93,8 @@ model Tarefa {
 // 3. A Prancheta de Agendamento (A Tabela Intermediária Explícita)
 model EquipamentoTemPlano {
   idequipamentos_tem_planos   String    @id @default(uuid())
-  
+  isActive                    Boolean   @default(true)
+
   // Chaves Estrangeiras
   equipamentos_idequipamentos String
   planos_idplanos             String
