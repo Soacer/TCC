@@ -21,6 +21,13 @@ model xyz {
   equipamentos Equipamento[]
 }
 
+model CausaRaiz {
+  idcausaraiz   String    @id @default(uuid())
+  nome          String    @unique
+  descricao     String?
+  falhas        Falha[]   
+}
+
 model Equipamento {
   idequipamentos    String        @id @default(uuid())
   nome              String
@@ -36,15 +43,71 @@ model Equipamento {
   xyz               xyz           @relation(fields: [xyz_idxyz], references: [idxyz])
   isActive          Boolean       @default(true)
   falhas            Falha[]
+  planos            EquipamentoTemPlano[]
 }
 
 model Falha {
-  idfalhas                    String      @id @default(uuid())
-  data_hora_falha             DateTime    @default(now())
-  data_hora_reparo            DateTime?
-  descricao                   String
-  causa_raiz                  String?
-  tempo_parada_horas          Float?
+  idfalhas           String       @id @default(uuid())
+  data_hora_falha    DateTime     @default(now())
+  data_hora_reparo   DateTime?
+  descricao          String       
+  tempo_parada_horas Float?
+  isActive           Boolean      @default(true)
+  
+  equipamento_id     String
+  equipamento        Equipamento  @relation(fields: [equipamento_id], references: [idequipamentos])
+  
+  causa_raiz_id      String?      
+  causa_raiz         CausaRaiz?   @relation(fields: [causa_raiz_id], references: [idcausaraiz])
+}
+
+// 1. O Template Mestre (Só guarda as regras)
+model Plano {
+  idplanos           String             @id @default(uuid())
+  tipo_manutencao    String             // Ex: PREVENTIVA, PREDITIVA
+  periocidade_dias   Int                // Ex: 30, 90, 365
+  
+  tarefas            Tarefa[]           // Ligação 1:N com as Tarefas
+  equipamentos       EquipamentoTemPlano[] // Ligação 1:N com a tabela intermediária
+  
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+// 2. O Passo a Passo (O que o técnico vai ler)
+model Tarefa {
+  idtarefas          String   @id @default(uuid())
+  ordem              Int      // Para ordenar: 1º Desligar, 2º Limpar...
+  tarefa             String   // O título da tarefa
+  tempo_execucao     Float?   // Tempo estimado em horas
+  descricao          String?  // Detalhes extras
+  
+  planos_idplanos    String
+  plano              Plano    @relation(fields: [planos_idplanos], references: [idplanos])
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+// 3. A Prancheta de Agendamento (A Tabela Intermediária Explícita)
+model EquipamentoTemPlano {
+  idequipamentos_tem_planos   String    @id @default(uuid())
+  
+  // Chaves Estrangeiras
   equipamentos_idequipamentos String
+  planos_idplanos             String
+  
+  // O seu controle de tempo individual!
+  ultima_execucao             DateTime?
+  proxima_execucao            DateTime?
+  
+  // As Relações
   equipamento                 Equipamento @relation(fields: [equipamentos_idequipamentos], references: [idequipamentos])
+  plano                       Plano       @relation(fields: [planos_idplanos], references: [idplanos])
+
+  createdAt                   DateTime    @default(now())
+  updatedAt                   DateTime    @updatedAt
+
+  // Proteção: Impede que a mesma bomba receba o MESMO plano mensal duas vezes
+  @@unique([equipamentos_idequipamentos, planos_idplanos])
 }

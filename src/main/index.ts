@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import { connectDb } from "./database/prisma";
 
 import { registerEquipmentHandlers } from "./ipc/Equipment/equipmentHandlers";
+import { registerFailureHandlers } from "./ipc/Failure/failureHandlers";
+import { registerRootCauseHandlers } from './ipc/RootCause/rootCauseHandlers'; // 🟢 Nova importação
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,6 +52,10 @@ app.whenReady().then(async () => {
   registerEquipmentHandlers();
 
   createWindow();
+  
+  registerFailureHandlers();
+
+  registerRootCauseHandlers();
 
   app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

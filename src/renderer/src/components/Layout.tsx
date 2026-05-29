@@ -44,6 +44,22 @@ export function Layout() {
               📋 Lista de Equipamentos
             </Link>
           </li>
+          <li style={{ marginBottom: "10px" }}>
+            <Link
+              to="/registro-falha"
+              style={{ color: "#ecf0f1", textDecoration: "none" }}
+            >
+              🚨 Registro de Falhas
+            </Link>
+          </li>
+          <li style={{ marginBottom: "10px" }}>
+            <Link
+              to="/historico-falhas"
+              style={{ color: "#ecf0f1", textDecoration: "none" }}
+            >
+              📚 Histórico de Falhas
+            </Link>
+          </li>
         </ul>
       </nav>
 

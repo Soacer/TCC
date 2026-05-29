@@ -1,8 +1,10 @@
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { CreateEquipmentForm } from './components/Equipments/CreateEquipmentForm';
-import { ListEquipments } from './components/Equipments/ListEquipments';
+import { CreateEquipmentForm } from './components/Equipment/CreateEquipmentForm';
+import { ListEquipments } from './components/Equipment/ListEquipments';
+import { CreateFailureForm } from './components/Failure/CreateFailureForm';
+import { FailuresView } from './components/Failure/FailuresView';
 
 // Uma página temporária super simples só para testar a navegação
 function Dashboard() {
@@ -25,6 +27,8 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="cadastro-equipamento" element={<CreateEquipmentForm />} />
           <Route path="equipamentos" element={<ListEquipments />} />
+          <Route path="registro-falha" element={<CreateFailureForm />} />
+          <Route path="/historico-falhas" element={<FailuresView />} />
           
         </Route>
       </Routes>

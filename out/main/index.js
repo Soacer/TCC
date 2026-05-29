@@ -35,7 +35,7 @@ async function connectDb() {
 	}
 }
 //#endregion
-//#region src/main/repositories/Equipments/EquipmentRepository.ts
+//#region src/main/repositories/Equipment/EquipmentRepository.ts
 var EquipmentRepository = class {
 	async create(data) {
 		return await prisma.equipamento.create({ data: {
@@ -87,7 +87,7 @@ var EquipmentRepository = class {
 	}
 };
 //#endregion
-//#region src/main/useCases/Equipments/CreateEquipmentUseCase.ts
+//#region src/main/useCases/Equipment/CreateEquipmentUseCase.ts
 var CreateEquipmentUseCase = class {
 	equipmentRepository;
 	constructor(equipmentRepository) {
@@ -103,7 +103,7 @@ var CreateEquipmentUseCase = class {
 	}
 };
 //#endregion
-//#region src/main/useCases/Equipments/SelectAllEquipmentUseCase.ts
+//#region src/main/useCases/Equipment/SelectAllEquipmentUseCase.ts
 var SelectAllEquipmentUseCase = class {
 	equipmentRepository;
 	constructor(equipmentRepository) {
@@ -114,7 +114,7 @@ var SelectAllEquipmentUseCase = class {
 	}
 };
 //#endregion
-//#region src/main/useCases/Equipments/SoftDeleteEquipmentUseCase.ts
+//#region src/main/useCases/Equipment/SoftDeleteEquipmentUseCase.ts
 var SoftDeleteEquipmentUseCase = class {
 	repository;
 	constructor(repository) {
@@ -125,7 +125,7 @@ var SoftDeleteEquipmentUseCase = class {
 	}
 };
 //#endregion
-//#region src/main/useCases/Equipments/UpdateEquipmentUseCase.ts
+//#region src/main/useCases/Equipment/UpdateEquipmentUseCase.ts
 var UpdateEquipmentUseCase = class {
 	repository;
 	constructor(repository) {
@@ -136,7 +136,7 @@ var UpdateEquipmentUseCase = class {
 	}
 };
 //#endregion
-//#region src/main/useCases/Equipments/ReactivateEquipmentUseCase.ts
+//#region src/main/useCases/Equipment/ReactivateEquipmentUseCase.ts
 var ReactivateEquipmentUseCase = class {
 	repository;
 	constructor(repository) {
@@ -212,6 +212,146 @@ function registerEquipmentHandlers() {
 	});
 }
 //#endregion
+//#region src/main/repositories/Failure/FailureRepository.ts
+var FailureRepository = class {
+	async create(data) {
+		return await prisma.falha.create({ data: {
+			descricao: data.descricao,
+			data_hora_falha: data.data_hora_falha,
+			data_hora_reparo: data.data_hora_reparo || null,
+			tempo_parada_horas: data.tempo_parada_horas,
+			equipamento: { connect: { idequipamentos: data.equipamento_id } },
+			...data.causa_raiz_nome && data.causa_raiz_nome.trim() !== "" ? { causa_raiz: { connectOrCreate: {
+				where: { nome: data.causa_raiz_nome.trim() },
+				create: { nome: data.causa_raiz_nome.trim() }
+			} } } : {}
+		} });
+	}
+	async findAll(onlyActive = true) {
+		return await prisma.falha.findMany({
+			where: onlyActive ? { isActive: true } : void 0,
+			include: {
+				equipamento: true,
+				causa_raiz: true
+			},
+			orderBy: { data_hora_falha: "desc" }
+		});
+	}
+	async findByEquipment(equipamentoId) {
+		return await prisma.falha.findMany({
+			where: {
+				equipamento_id: equipamentoId,
+				isActive: true
+			},
+			include: { causa_raiz: true },
+			orderBy: { data_hora_falha: "desc" }
+		});
+	}
+	async update(id, data) {
+		return await prisma.falha.update({
+			where: { idfalhas: id },
+			data: {
+				descricao: data.descricao,
+				data_hora_falha: data.data_hora_falha,
+				data_hora_reparo: data.data_hora_reparo,
+				tempo_parada_horas: data.tempo_parada_horas,
+				equipamento_id: data.equipamento_id,
+				causa_raiz_id: data.causa_raiz_id || null
+			}
+		});
+	}
+	async softDelete(id) {
+		return await prisma.falha.update({
+			where: { idfalhas: id },
+			data: { isActive: false }
+		});
+	}
+	async reactivate(id) {
+		return await prisma.falha.update({
+			where: { idfalhas: id },
+			data: { isActive: true }
+		});
+	}
+};
+//#endregion
+//#region src/main/useCases/Failure/CreateFailureUseCase.ts
+var CreateFailureUseCase = class {
+	repository;
+	constructor(repository) {
+		this.repository = repository;
+	}
+	async execute(data) {
+		if (!data.equipamento_id) throw new Error("O equipamento afetado é obrigatório.");
+		if (!data.descricao) throw new Error("A descrição do problema é obrigatória.");
+		return await this.repository.create(data);
+	}
+};
+//#endregion
+//#region src/main/ipc/Failure/failureHandlers.ts
+function registerFailureHandlers() {
+	electron.ipcMain.handle("create-failure", async (_, data) => {
+		try {
+			return {
+				success: true,
+				data: await new CreateFailureUseCase(new FailureRepository()).execute(data)
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: error.message
+			};
+		}
+	});
+	electron.ipcMain.handle("get-failures", async () => {
+		try {
+			return {
+				success: true,
+				data: await new FailureRepository().findAll()
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: error.message
+			};
+		}
+	});
+}
+//#endregion
+//#region src/main/repositories/RootCause/RootCauseRepository.ts
+var RootCauseRepository = class {
+	async findAll() {
+		return await prisma.causaRaiz.findMany({ orderBy: { nome: "asc" } });
+	}
+};
+//#endregion
+//#region src/main/useCases/RootCause/RootCauseUseCaste.ts
+var GetCausasRaizUseCase = class {
+	repository;
+	constructor(repository) {
+		this.repository = repository;
+	}
+	async execute() {
+		return await this.repository.findAll();
+	}
+};
+//#endregion
+//#region src/main/ipc/RootCause/rootCauseHandlers.ts
+function registerRootCauseHandlers() {
+	electron.ipcMain.handle("get-causas-raiz", async () => {
+		try {
+			return {
+				success: true,
+				data: await new GetCausasRaizUseCase(new RootCauseRepository()).execute()
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: error.message
+			};
+		}
+	});
+}
+//#endregion
 //#region src/main/index.ts
 var __filename$1 = (0, node_url.fileURLToPath)(require("url").pathToFileURL(__filename).href);
 var __dirname$1 = node_path.default.dirname(__filename$1);
@@ -243,6 +383,8 @@ electron.app.whenReady().then(async () => {
 	await connectDb();
 	registerEquipmentHandlers();
 	createWindow();
+	registerFailureHandlers();
+	registerRootCauseHandlers();
 	electron.app.on("activate", function() {
 		if (electron.BrowserWindow.getAllWindows().length === 0) createWindow();
 	});
