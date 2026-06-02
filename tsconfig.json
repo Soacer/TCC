@@ -33,7 +33,8 @@
     "src/renderer/src/**/*.ts",
     "src/renderer/src/**/*.tsx", // Garante que o React seja incluído
     "src/shared/**/*.ts",
-    "prisma/**/*.ts"
+    "prisma/**/*.ts",
+    "src/**/*"
   ],
   "exclude": ["node_modules"]
 }

@@ -1,6 +1,6 @@
 // src/renderer/src/env.d.ts
 
-import { CreateEquipmentDTO } from '../../shared/dto/CreateEquipmentDTO';
+import { CreateEquipmentDTO } from '../../shared/dto/Equipment/CreateEquipmentDTO';
 
 // Estendemos a interface global Window
 declare global {

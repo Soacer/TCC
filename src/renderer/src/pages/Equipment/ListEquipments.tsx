@@ -2,14 +2,13 @@ import React, { useEffect, useState } from "react";
 
 export function ListEquipments() {
   const [equipamentos, setEquipamentos] = useState<any[]>([]);
-  const [mostrarApenasAtivos, setMostrarApenasAtivos] = useState(true); // O filtro local
+  const [mostrarApenasAtivos, setMostrarApenasAtivos] = useState(true);
   const [loading, setLoading] = useState(true);
   const [equipamentoEmEdicao, setEquipamentoEmEdicao] = useState<any | null>(
     null,
   );
   const [formData, setFormData] = useState<any>({});
 
-  // Busca TODOS os equipamentos no banco de dados apenas uma vez
   const fetchEquipamentos = async () => {
     setLoading(true);
     // @ts-ignore
@@ -32,7 +31,7 @@ export function ListEquipments() {
       // @ts-ignore
       const response = await window.api.softDeleteEquipment(id);
       if (response.success) {
-        fetchEquipamentos(); // Recarrega para atualizar o status visual
+        fetchEquipamentos();
       } else {
         alert("Erro ao desativar: " + response.error);
       }
@@ -45,19 +44,18 @@ export function ListEquipments() {
       // @ts-ignore
       const response = await window.api.reactivateEquipment(id);
       if (response.success) {
-        fetchEquipamentos(); // Recarrega os dados da tabela
+        fetchEquipamentos();
       } else {
         alert("Erro ao reativar: " + response.error);
       }
     }
   };
 
-  // 🟢 A MÁGICA DO FILTRO NO FRONT-END
   const equipamentosFiltrados = equipamentos.filter((eq) => {
     if (mostrarApenasAtivos) {
       return eq.isActive === true;
     }
-    return true; // Se o toggle estiver desligado, mostra todos
+    return true;
   });
 
   return (
@@ -71,8 +69,6 @@ export function ListEquipments() {
         }}
       >
         <h2>Inventário de Equipamentos</h2>
-
-        {/* Toggle do Filtro */}
         <label
           style={{
             display: "flex",
@@ -94,7 +90,6 @@ export function ListEquipments() {
           Mostrar apenas ativos
         </label>
       </div>
-
       {loading ? (
         <p>Carregando dados do banco...</p>
       ) : (
@@ -120,10 +115,10 @@ export function ListEquipments() {
               <th style={{ padding: "12px" }}>Fabricante</th>
               <th style={{ padding: "12px" }}>Modelo</th>
               <th style={{ padding: "12px" }}>Setor</th>
-              <th style={{ padding: "12px" }}>Data de Instalação</th>
+              <th style={{ padding: "12px" }}>Instalação</th>
               <th style={{ padding: "12px" }}>Status</th>
-              <th style={{ padding: "12px" }}>Curva ABC</th>
-              <th style={{ padding: "12px" }}>Curva XYZ</th>
+              <th style={{ padding: "12px" }}>ABC</th>
+              <th style={{ padding: "12px" }}>XYZ</th>
               <th style={{ padding: "12px", textAlign: "center" }}>Ações</th>
             </tr>
           </thead>
@@ -131,7 +126,7 @@ export function ListEquipments() {
             {equipamentosFiltrados.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={11}
                   style={{ padding: "20px", textAlign: "center" }}
                 >
                   Nenhum equipamento encontrado.
@@ -163,12 +158,14 @@ export function ListEquipments() {
                   <td style={{ padding: "12px" }}>{eq.status}</td>
                   <td style={{ padding: "12px" }}>{eq.tag}</td>
                   <td style={{ padding: "12px" }}>{eq.nome}</td>
-                  <td style={{ padding: "12px" }}>{eq.setor}</td>
+                  <td style={{ padding: "12px" }}>
+                    {eq.setor?.nome || "-"}
+                  </td>{" "}
                   <td style={{ padding: "12px" }}>
                     {eq.data_instalacao
                       ? new Date(eq.data_instalacao).toLocaleDateString("pt-BR")
                       : "-"}
-                  </td>{" "}
+                  </td>
                   <td style={{ padding: "12px" }}>{eq.status}</td>
                   <td
                     style={{
@@ -208,6 +205,7 @@ export function ListEquipments() {
                           fabricante: eq.fabricante,
                           modelo: eq.modelo,
                           setor: eq.setor,
+                          tipo: eq.tipo || "OUTROS", // 🟢 Carrega o tipo atual
                           idcriticidade: eq.abc_idcriticidade,
                           idxyz: eq.xyz_idxyz,
                         });
@@ -224,8 +222,6 @@ export function ListEquipments() {
                     >
                       ✏️ Editar
                     </button>
-
-                    {/* RENDERIZAÇÃO CONDICIONAL: Se ativo, mostra botão de desativar. Se inativo, mostra reativar */}
                     {eq.isActive ? (
                       <button
                         onClick={() =>
@@ -336,6 +332,32 @@ export function ListEquipments() {
                   style={{ width: "100%", padding: "8px", marginTop: "4px" }}
                 />
               </label>
+              <label>
+                Tipo do Equipamento:
+                <select
+                  value={formData.tipo || "OUTROS"}
+                  onChange={(e) =>
+                    setFormData({ ...formData, tipo: e.target.value })
+                  }
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    marginTop: "4px",
+                    backgroundColor: "white",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                  }}
+                >
+                  <option value="BOMBA">Bomba</option>
+                  <option value="COMPRESSOR">Compressor</option>
+                  <option value="MOTOR">Motor</option>
+                  <option value="VALVULA">Válvula</option>
+                  <option value="TANQUE">Tanque</option>
+                  <option value="PERMUTADOR">Permutador de Calor</option>
+                  <option value="INSTRUMENTO">Instrumento</option>
+                  <option value="OUTROS">Outros</option>
+                </select>
+              </label>
               {/* Você pode adicionar os outros campos (Fabricante, Modelo) seguindo o mesmo padrão */}
             </div>
 
@@ -387,7 +409,7 @@ export function ListEquipments() {
             </div>
           </div>
         </div>
-      )}
+      )}{" "}
     </div>
   );
 }

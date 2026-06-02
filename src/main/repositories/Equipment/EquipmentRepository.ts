@@ -1,16 +1,17 @@
 import { prisma } from "../../database/prisma";
 
-import type { CreateEquipmentDTO } from "../../../shared/dto/CreateEquipmentDTO";
+import type { CreateEquipmentDTO } from "../../../shared/dto/Equipment/CreateEquipmentDTO";
 
 export class EquipmentRepository {
   async create(data: CreateEquipmentDTO) {
     return await prisma.equipamento.create({
       data: {
         nome: data.nome,
+        tipo:data.tipo,
         tag: data.tag,
         fabricante: data.fabricante,
         modelo: data.modelo,
-        setor: data.setor,
+        setorId: data.setorId,
         data_instalacao: data.data_instalacao,
         status: "OPERANDO",
         abc_idcriticidade: data.idcriticidade,
@@ -28,6 +29,7 @@ export class EquipmentRepository {
       include: {
         abc: true,
         xyz: true,
+        setor: true,
       },
     });
   }
@@ -44,10 +46,11 @@ export class EquipmentRepository {
       where: { idequipamentos: id },
       data: {
         nome: data.nome,
+        tipo:data.tipo,
         tag: data.tag,
         fabricante: data.fabricante,
         modelo: data.modelo,
-        setor: data.setor,
+        setorId: data.setorId,
         abc_idcriticidade: data.idcriticidade,
         xyz_idxyz: data.idxyz,
       },

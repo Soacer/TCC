@@ -60,6 +60,38 @@ export function Layout() {
               📚 Histórico de Falhas
             </Link>
           </li>
+          <li style={{ marginBottom: "10px" }}>
+            <Link
+              to="/criar-plano"
+              style={{ color: "#ecf0f1", textDecoration: "none" }}
+            >
+              📝 Criar Plano
+            </Link>
+          </li>
+          <li style={{ marginBottom: "10px" }}>
+            <Link
+              to="/visualizar-planos"
+              style={{ color: "#ecf0f1", textDecoration: "none" }}
+            >
+              📚 Meus Planos
+            </Link>
+          </li>
+          <li style={{ marginBottom: "10px" }}>
+            <Link
+              to="/instalacoes"
+              style={{ color: "#ecf0f1", textDecoration: "none" }}
+            >
+              🏭 Instalações
+            </Link>
+          </li>
+          <li style={{ marginBottom: "10px" }}>
+            <Link
+              to="/digital-twin"
+              style={{ color: "#ecf0f1", textDecoration: "none" }}
+            >
+              🕸️ Gêmeo Digital
+            </Link>
+          </li>
         </ul>
       </nav>
 

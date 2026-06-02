@@ -1,5 +1,5 @@
 import { EquipmentRepository } from '../../repositories/Equipment/EquipmentRepository';
-import type { CreateEquipmentDTO } from '../../../shared/dto/CreateEquipmentDTO';
+import type { CreateEquipmentDTO } from '../../../shared/dto/Equipment/CreateEquipmentDTO';
 
 export class CreateEquipmentUseCase {
   constructor(private equipmentRepository: EquipmentRepository) {}

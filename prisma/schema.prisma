@@ -9,6 +9,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ==========================================
+// 1. TABELAS DE APOIO E CLASSIFICAÇÃO
+// ==========================================
+
+enum TipoLigacao {
+  SERIE
+  PARALELO
+  BYPASS
+}
+
+enum TipoEquipamento {
+  BOMBA
+  COMPRESSOR
+  MOTOR
+  VALVULA
+  TANQUE
+  PERMUTADOR
+  INSTRUMENTO
+  OUTROS
+}
+
 model abc {
   idcriticidade Int           @id @default(autoincrement())
   nivel         String        @unique
@@ -22,28 +43,69 @@ model xyz {
 }
 
 model CausaRaiz {
-  idcausaraiz   String    @id @default(uuid())
-  nome          String    @unique
-  descricao     String?
-  falhas        Falha[]   
+  idcausaraiz  String  @id @default(uuid())
+  nome         String  @unique
+  descricao    String?
+  falhas       Falha[]   
 }
 
+// ==========================================
+// 2. HIERARQUIA ESPACIAL DA PLANTA
+// ==========================================
+
+model Planta {
+  idplanta String  @id @default(uuid())
+  nome     String
+  isActive Boolean @default(true) // 🟢 ADICIONADO
+  
+  setores  Setor[]
+}
+
+model Setor {
+  idsetor   String @id @default(uuid())
+  nome      String
+  isActive  Boolean @default(true)
+
+  plantaId  String?
+  planta    Planta? @relation(fields: [plantaId], references: [idplanta])
+
+  blocos    DiagramaBloco[]
+  conexoes  DiagramaConexao[]
+  
+  // 🟢 Renomeado para minúsculo para padrão camelCase
+  equipamentos Equipamento[] 
+}
+
+// ==========================================
+// 3. EQUIPAMENTOS E OCORRÊNCIAS
+// ==========================================
+
 model Equipamento {
-  idequipamentos    String        @id @default(uuid())
+  idequipamentos    String          @id @default(uuid())
   nome              String
-  tag               String        @unique
+  tipo              TipoEquipamento @default(OUTROS)
+  tag               String          @unique
   fabricante        String
   modelo            String
-  setor             String
   data_instalacao   DateTime
-  status            String        @default("OPERANDO")
+  status            String          @default("OPERANDO")
+  isActive          Boolean         @default(true)
+  
   abc_idcriticidade Int
   xyz_idxyz         Int
-  abc               abc           @relation(fields: [abc_idcriticidade], references: [idcriticidade])
-  xyz               xyz           @relation(fields: [xyz_idxyz], references: [idxyz])
-  isActive          Boolean       @default(true)
+  
+  // 🟢 FK Alterada para setorId
+  setorId           String?
+  
+  abc               abc             @relation(fields: [abc_idcriticidade], references: [idcriticidade])
+  xyz               xyz             @relation(fields: [xyz_idxyz], references: [idxyz])
+  
+  // 🟢 Relação atualizada usando o novo nome da FK
+  setor             Setor?           @relation(fields: [setorId], references: [idsetor])
+
   falhas            Falha[]
   planos            EquipamentoTemPlano[]
+  blocos_visuais    DiagramaBloco[] 
 }
 
 model Falha {
@@ -61,27 +123,30 @@ model Falha {
   causa_raiz         CausaRaiz?   @relation(fields: [causa_raiz_id], references: [idcausaraiz])
 }
 
-// 1. O Template Mestre (Só guarda as regras)
-model Plano {
-  idplanos           String             @id @default(uuid())
-  tipo_manutencao    String             // Ex: PREVENTIVA, PREDITIVA
-  periocidade_dias   Int                // Ex: 30, 90, 365
-  isActive            Boolean            @default(true)
+// ==========================================
+// 4. PLANOS DE MANUTENÇÃO (PREVENTIVA)
+// ==========================================
 
-  tarefas            Tarefa[]           // Ligação 1:N com as Tarefas
-  equipamentos       EquipamentoTemPlano[] // Ligação 1:N com a tabela intermediária
+model Plano {
+  idplanos           String                @id @default(uuid())
+  tipo_manutencao    String                
+  periocidade_dias   Int                   
+  isActive           Boolean               @default(true)
+
+  tarefas            Tarefa[]              
+  equipamentos       EquipamentoTemPlano[] 
   
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
 }
 
-// 2. O Passo a Passo (O que o técnico vai ler)
 model Tarefa {
   idtarefas          String   @id @default(uuid())
-  ordem              Int      // Para ordenar: 1º Desligar, 2º Limpar...
-  tarefa             String   // O título da tarefa
-  tempo_execucao     Float?   // Tempo estimado em horas
-  descricao          String?  // Detalhes extras
+  ordem              Int      
+  tarefa             String   
+  tempo_execucao     Float?   
+  descricao          String?  
+  isActive           Boolean  @default(true)
   
   planos_idplanos    String
   plano              Plano    @relation(fields: [planos_idplanos], references: [idplanos])
@@ -90,26 +155,61 @@ model Tarefa {
   updatedAt          DateTime @updatedAt
 }
 
-// 3. A Prancheta de Agendamento (A Tabela Intermediária Explícita)
+// Tabela Intermediária (A Prancheta de Agendamento individual)
 model EquipamentoTemPlano {
-  idequipamentos_tem_planos   String    @id @default(uuid())
-  isActive                    Boolean   @default(true)
+  idequipamentos_tem_planos   String      @id @default(uuid())
+  isActive                    Boolean     @default(true)
 
-  // Chaves Estrangeiras
   equipamentos_idequipamentos String
   planos_idplanos             String
   
-  // O seu controle de tempo individual!
   ultima_execucao             DateTime?
   proxima_execucao            DateTime?
   
-  // As Relações
   equipamento                 Equipamento @relation(fields: [equipamentos_idequipamentos], references: [idequipamentos])
   plano                       Plano       @relation(fields: [planos_idplanos], references: [idplanos])
 
   createdAt                   DateTime    @default(now())
   updatedAt                   DateTime    @updatedAt
 
-  // Proteção: Impede que a mesma bomba receba o MESMO plano mensal duas vezes
   @@unique([equipamentos_idequipamentos, planos_idplanos])
+}
+
+// ==========================================
+// 5. DIGITAL TWIN (DIAGRAMA DE BLOCOS)
+// ==========================================
+
+// O "Quadradinho" desenhado na tela
+model DiagramaBloco {
+  id_bloco         String            @id @default(uuid())
+  tipo_bloco       String            @default("default") // 🟢 ADICIONADO AQUI
+  posicao_x        Float
+  posicao_y        Float
+  
+  // A qual tela/setor este desenho pertence?
+  setorId          String
+  setor            Setor             @relation(fields: [setorId], references: [idsetor])
+  
+  // Qual máquina real ele representa? (Pode ser nulo para blocos visuais simples)
+  equipamentoId    String?
+  equipamento      Equipamento?      @relation(fields: [equipamentoId], references: [idequipamentos])
+
+  // Linhas que ligam este bloco aos outros
+  conexoesSaindo   DiagramaConexao[] @relation("BlocoOrigem")
+  conexoesEntrando DiagramaConexao[] @relation("BlocoDestino")
+}
+
+// A "Linha" que liga os blocos e define a matemática da confiabilidade
+model DiagramaConexao {
+  id_conexao       String        @id @default(uuid())
+  tipo_ligacao     TipoLigacao   @default(SERIE)
+  
+  setorId          String
+  setor            Setor         @relation(fields: [setorId], references: [idsetor])
+
+  blocoOrigemId    String
+  blocoOrigem      DiagramaBloco @relation("BlocoOrigem", fields: [blocoOrigemId], references: [id_bloco])
+  
+  blocoDestinoId   String
+  blocoDestino     DiagramaBloco @relation("BlocoDestino", fields: [blocoDestinoId], references: [id_bloco])
 }

@@ -4,7 +4,7 @@ import { CreateEquipmentUseCase } from '../../useCases/Equipment/CreateEquipment
 import { SelectAllEquipmentUseCase } from '../../useCases/Equipment/SelectAllEquipmentUseCase';
 import { SoftDeleteEquipmentUseCase } from '../../useCases/Equipment/SoftDeleteEquipmentUseCase';
 
-import type { CreateEquipmentDTO } from '../../../shared/dto/CreateEquipmentDTO';
+import type { CreateEquipmentDTO } from '../../../shared/dto/Equipment/CreateEquipmentDTO';
 import { UpdateEquipmentUseCase } from '../../useCases/Equipment/UpdateEquipmentUseCase';
 import { ReactivateEquipmentUseCase } from '../../useCases/Equipment/ReactivateEquipmentUseCase';
 

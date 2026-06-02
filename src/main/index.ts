@@ -5,7 +5,13 @@ import { connectDb } from "./database/prisma";
 
 import { registerEquipmentHandlers } from "./ipc/Equipment/equipmentHandlers";
 import { registerFailureHandlers } from "./ipc/Failure/failureHandlers";
-import { registerRootCauseHandlers } from './ipc/RootCause/rootCauseHandlers'; // 🟢 Nova importação
+import { registerRootCauseHandlers } from "./ipc/RootCause/rootCauseHandlers";
+import { registerPlanHandlers } from "./ipc/Plan/planHandlers";
+import { registerEquipmentHasPlanHandlers } from "./ipc/EquipmentHasPlan/equipmentHasPlanHandlers";
+import { registerTaskHandlers } from "./ipc/Task/taskHandlers";
+import { registerDigitalTwinHandlers } from "./ipc/DigitalTwin/digitalTwinHandlers";
+import { registerFacilityHandlers } from './ipc/Facility/facilityHandlers';
+import { registerDashboardHandlers } from './ipc/Dashboard/dashboardHandlers';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,15 +54,16 @@ function createWindow(): void {
 
 app.whenReady().then(async () => {
   await connectDb();
-
   registerEquipmentHandlers();
-
   createWindow();
-  
   registerFailureHandlers();
-
   registerRootCauseHandlers();
-
+  registerPlanHandlers();
+  registerEquipmentHasPlanHandlers();
+  registerTaskHandlers();
+  registerDigitalTwinHandlers();
+  registerFacilityHandlers();
+  registerDashboardHandlers();
   app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

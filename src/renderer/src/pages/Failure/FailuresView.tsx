@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreateFailureForm } from './CreateFailureForm'; // Ajuste o caminho conforme o seu projeto
-
+import { CreateFailureForm } from "../../components/Failure/CreateFailureForm";
 export function FailuresView() {
   const [falhas, setFalhas] = useState<any[]>([]);
   const [busca, setBusca] = useState('');

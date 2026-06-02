@@ -1,102 +1,84 @@
 // prisma/seed.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🧹 Limpando o banco de dados...');
-  // A ordem de exclusão importa! Primeiro os "filhos" (Falhas), depois os "pais".
+  console.log("🧹 Limpando o banco de dados...");
   await prisma.falha.deleteMany();
   await prisma.equipamento.deleteMany();
+  await prisma.setor.deleteMany();
+  await prisma.planta.deleteMany();
   await prisma.causaRaiz.deleteMany();
   await prisma.abc.deleteMany();
   await prisma.xyz.deleteMany();
 
-  console.log('🌱 Populando tabelas de Criticidade (ABC / XYZ)...');
-  
+  console.log("🌱 Populando tabelas de Criticidade (ABC / XYZ)...");
   await prisma.abc.createMany({
     data: [
-      { idcriticidade: 1, nivel: 'A' },
-      { idcriticidade: 2, nivel: 'B' },
-      { idcriticidade: 3, nivel: 'C' }
-    ]
+      { idcriticidade: 1, nivel: "A" },
+      { idcriticidade: 2, nivel: "B" },
+      { idcriticidade: 3, nivel: "C" },
+    ],
   });
-
   await prisma.xyz.createMany({
     data: [
-      { idxyz: 1, nivel: 'X' },
-      { idxyz: 2, nivel: 'Y' },
-      { idxyz: 3, nivel: 'Z' }
-    ]
+      { idxyz: 1, nivel: "X" },
+      { idxyz: 2, nivel: "Y" },
+      { idxyz: 3, nivel: "Z" },
+    ],
   });
 
-  console.log('🌱 Criando Causas Raízes...');
+  console.log("🌱 Criando Planta e Setores...");
+  const planta = await prisma.planta.create({
+    data: { nome: "Planta Principal" },
+  });
+
+  const setorCasaBombas = await prisma.setor.create({ data: { nome: "Casa de Bombas", plantaId: planta.idplanta } });
+  const setorArmazenamento = await prisma.setor.create({ data: { nome: "Armazenamento", plantaId: planta.idplanta } });
+  const setorUtilidades = await prisma.setor.create({ data: { nome: "Utilidades", plantaId: planta.idplanta } });
+  const setorLinha = await prisma.setor.create({ data: { nome: "Linha de Montagem", plantaId: planta.idplanta } });
+
+  console.log("🌱 Criando Causas Raízes...");
   const causas = {
-    lubrificacao: await prisma.causaRaiz.create({ data: { nome: 'Falta de Lubrificação' } }), // Nosso ofensor #1
-    desgaste: await prisma.causaRaiz.create({ data: { nome: 'Desgaste Natural do Componente' } }), // Ofensor #2
-    eletrica: await prisma.causaRaiz.create({ data: { nome: 'Sobrecarga Elétrica' } }),
-    operacional: await prisma.causaRaiz.create({ data: { nome: 'Erro Operacional' } }),
-    vibracao: await prisma.causaRaiz.create({ data: { nome: 'Excesso de Vibração' } }),
+    lubrificacao: await prisma.causaRaiz.create({ data: { nome: "Falta de Lubrificação" } }),
+    desgaste: await prisma.causaRaiz.create({ data: { nome: "Desgaste Natural do Componente" } }),
+    eletrica: await prisma.causaRaiz.create({ data: { nome: "Sobrecarga Elétrica" } }),
+    operacional: await prisma.causaRaiz.create({ data: { nome: "Erro Operacional" } }),
+    vibracao: await prisma.causaRaiz.create({ data: { nome: "Excesso de Vibração" } }),
+    vazamento: await prisma.causaRaiz.create({ data: { nome: "Vazamento de Fluido" } }),
   };
 
-  console.log('🌱 Criando Equipamentos...');
-  // Nota: Se os seus equipamentos precisarem do ID do abc/xyz diretamente na criação, 
-  // basta adicionar os campos aqui (ex: abc_id: 1, xyz_id: 1)
-  const equipamentos = [
-    await prisma.equipamento.create({ 
-      data: { 
-        tag: 'BOMBA-001', 
-        nome: 'Bomba de Recalque Principal',
-        fabricante: 'KSB',
-        modelo: 'Meganorm 32-160',
-        setor: 'Casa de Bombas',
-        data_instalacao: new Date('2023-05-10T00:00:00Z'),
-        // 🟢 Usando o connect: O Prisma se vira para achar a coluna correta!
-        abc: { connect: { idcriticidade: 1 } }, // 1 = A
-        xyz: { connect: { idxyz: 1 } }          // 1 = X
-      } 
-    }),
-    await prisma.equipamento.create({ 
-      data: { 
-        tag: 'MOTOR-002', 
-        nome: 'Motor da Esteira Secundária',
-        fabricante: 'WEG',
-        modelo: 'W22 Premium',
-        setor: 'Linha de Montagem',
-        data_instalacao: new Date('2024-01-15T00:00:00Z'),
-        abc: { connect: { idcriticidade: 2 } }, // 2 = B
-        xyz: { connect: { idxyz: 2 } }          // 2 = Y
-      } 
-    }),
-    await prisma.equipamento.create({ 
-      data: { 
-        tag: 'COMP-003', 
-        nome: 'Compressor de Ar Central',
-        fabricante: 'Atlas Copco',
-        modelo: 'GA 50',
-        setor: 'Utilidades',
-        data_instalacao: new Date('2022-11-20T00:00:00Z'),
-        abc: { connect: { idcriticidade: 1 } }, // 1 = A
-        xyz: { connect: { idxyz: 1 } }          // 1 = X
-      } 
-    }),
-    await prisma.equipamento.create({ 
-      data: { 
-        tag: 'VENT-004', 
-        nome: 'Ventilador de Exaustão',
-        fabricante: 'Ebmpapst',
-        modelo: 'Axial S-Force',
-        setor: 'Pintura',
-        data_instalacao: new Date('2025-02-05T00:00:00Z'),
-        abc: { connect: { idcriticidade: 3 } }, // 3 = C
-        xyz: { connect: { idxyz: 3 } }          // 3 = Z
-      } 
-    })
+  console.log("🌱 Criando Equipamentos...");
+  const equipData = [
+    { tag: "BOMBA-001", nome: "Bomba de Recalque Principal", tipo: "BOMBA", setor: setorCasaBombas },
+    { tag: "BOMBA-002", nome: "Bomba de Recalque Standby", tipo: "BOMBA", setor: setorCasaBombas },
+    { tag: "TQ-001", nome: "Tanque Pulmão de Água", tipo: "TANQUE", setor: setorArmazenamento },
+    { tag: "TC-001", nome: "Permutador de Calor Casco-Tubo", tipo: "PERMUTADOR", setor: setorUtilidades },
+    { tag: "MOTOR-001", nome: "Motor da Esteira Secundária", tipo: "MOTOR", setor: setorLinha },
+    { tag: "COMP-001", nome: "Compressor de Ar Central", tipo: "COMPRESSOR", setor: setorUtilidades },
+    { tag: "VALV-001", nome: "Válvula de Controle Proporcional", tipo: "VALVULA", setor: setorCasaBombas },
   ];
 
-  console.log('🌱 Gerando Histórico de Falhas (Viciado para o Pareto)...');
-  
-  // Função auxiliar para gerar datas passadas
+  const equipamentos = [];
+  for (const eq of equipData) {
+    const e = await prisma.equipamento.create({
+      data: {
+        tag: eq.tag,
+        nome: eq.nome,
+        tipo: eq.tipo as any,
+        fabricante: "Genérico",
+        modelo: "Modelo 01",
+        data_instalacao: new Date(new Date().setFullYear(new Date().getFullYear() - 1)), // 1 ano de vida
+        setor: { connect: { idsetor: eq.setor.idsetor } },
+        abc: { connect: { idcriticidade: 1 } },
+        xyz: { connect: { idxyz: 1 } },
+      },
+    });
+    equipamentos.push(e);
+  }
+
+  console.log("🌱 Gerando Histórico de Falhas...");
   const diasAtras = (dias: number) => {
     const d = new Date();
     d.setDate(d.getDate() - dias);
@@ -104,57 +86,51 @@ async function main() {
   };
 
   const falhasSeed = [
-    // --- O GIGANTE: Falta de Lubrificação (8 ocorrências) ---
     { eq: equipamentos[0], causa: causas.lubrificacao, dias: 2, horasReparo: 2 },
     { eq: equipamentos[1], causa: causas.lubrificacao, dias: 5, horasReparo: 1 },
-    { eq: equipamentos[0], causa: causas.lubrificacao, dias: 8, horasReparo: null }, // Pendente
-    { eq: equipamentos[2], causa: causas.lubrificacao, dias: 12, horasReparo: 4 },
-    { eq: equipamentos[3], causa: causas.lubrificacao, dias: 15, horasReparo: 2 },
+    { eq: equipamentos[4], causa: causas.lubrificacao, dias: 12, horasReparo: 4 },
+    { eq: equipamentos[5], causa: causas.lubrificacao, dias: 15, horasReparo: 2 },
     { eq: equipamentos[0], causa: causas.lubrificacao, dias: 18, horasReparo: 3 },
-    { eq: equipamentos[1], causa: causas.lubrificacao, dias: 20, horasReparo: null }, // Pendente
-    { eq: equipamentos[2], causa: causas.lubrificacao, dias: 25, horasReparo: 1 },
-
-    // --- O MÉDIO: Desgaste Natural (4 ocorrências) ---
+    { eq: equipamentos[5], causa: causas.lubrificacao, dias: 25, horasReparo: 1 },
+    { eq: equipamentos[1], causa: causas.lubrificacao, dias: 30, horasReparo: 2 },
+    { eq: equipamentos[0], causa: causas.lubrificacao, dias: 35, horasReparo: 5 },
+    { eq: equipamentos[4], causa: causas.lubrificacao, dias: 42, horasReparo: 3 },
     { eq: equipamentos[0], causa: causas.desgaste, dias: 10, horasReparo: 6 },
-    { eq: equipamentos[1], causa: causas.desgaste, dias: 14, horasReparo: 5 },
-    { eq: equipamentos[3], causa: causas.desgaste, dias: 22, horasReparo: 8 },
-    { eq: equipamentos[2], causa: causas.desgaste, dias: 28, horasReparo: 4 },
-
-    // --- OS ISOLADOS (1 a 2 ocorrências) ---
-    { eq: equipamentos[2], causa: causas.eletrica, dias: 3, horasReparo: 12 },
-    { eq: equipamentos[1], causa: causas.operacional, dias: 7, horasReparo: 2 },
-    { eq: equipamentos[0], causa: causas.vibracao, dias: 30, horasReparo: 4 },
+    { eq: equipamentos[4], causa: causas.desgaste, dias: 14, horasReparo: 5 },
+    { eq: equipamentos[6], causa: causas.desgaste, dias: 22, horasReparo: 8 },
+    { eq: equipamentos[5], causa: causas.desgaste, dias: 28, horasReparo: 4 },
+    { eq: equipamentos[3], causa: causas.desgaste, dias: 40, horasReparo: 12 },
+    { eq: equipamentos[6], causa: causas.desgaste, dias: 50, horasReparo: 2 },
+    { eq: equipamentos[5], causa: causas.eletrica, dias: 3, horasReparo: 12 },
+    { eq: equipamentos[4], causa: causas.eletrica, dias: 17, horasReparo: 8 },
+    { eq: equipamentos[0], causa: causas.eletrica, dias: 26, horasReparo: 14 },
+    { eq: equipamentos[1], causa: causas.eletrica, dias: 33, horasReparo: 6 },
+    { eq: equipamentos[4], causa: causas.operacional, dias: 7, horasReparo: 2 },
+    { eq: equipamentos[0], causa: causas.vibracao, dias: 60, horasReparo: 4 },
+    { eq: equipamentos[2], causa: causas.vazamento, dias: 19, horasReparo: 5 },
   ];
 
   for (const item of falhasSeed) {
     const dataFalha = diasAtras(item.dias);
-    let dataReparo = null;
     
-    // Se tiver horas de reparo, soma na data da falha
-    if (item.horasReparo) {
-      dataReparo = new Date(dataFalha);
-      dataReparo.setHours(dataReparo.getHours() + item.horasReparo);
-    }
+    // 🟢 CORREÇÃO: Calculando a data de reparo aqui
+    const dataReparo = new Date(dataFalha.getTime() + (item.horasReparo * 60 * 60 * 1000));
 
     await prisma.falha.create({
       data: {
-        descricao: `Falha registrada durante a operação. Sintoma detectado pelo operador da área.`,
+        descricao: `Falha técnica em ${item.eq.tag}`,
         data_hora_falha: dataFalha,
-        data_hora_reparo: dataReparo,
+        data_hora_reparo: dataReparo, // 🟢 Agora a data é salva no banco!
+        tempo_parada_horas: item.horasReparo,
         equipamento_id: item.eq.idequipamentos,
-        causa_raiz_id: item.causa.idcausaraiz
-      }
+        causa_raiz_id: item.causa.idcausaraiz,
+      },
     });
   }
 
-  console.log('✅ Banco de dados populado com sucesso!');
+  console.log("✅ Banco populado com sucesso!");
 }
 
 main()
-  .catch((e) => {
-    console.error('❌ Erro ao rodar a seed:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(async () => { await prisma.$disconnect(); });

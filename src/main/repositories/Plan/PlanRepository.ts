@@ -1,17 +1,7 @@
 import { PrismaClient } from '@prisma/client';
+import { CreatePlanDTO } from '../../../shared/dto/Plan/createPlan.dto';
 
 const prisma = new PrismaClient();
-
-export type CreatePlanDTO = {
-  tipo_manutencao: string;
-  periocidade_dias: number;
-  tarefas: {
-    ordem: number;
-    tarefa: string;
-    tempo_execucao?: number | null;
-    descricao?: string | null;
-  }[];
-};
 
 export class PlanRepository {
   // 1. Criar Plano e Tarefas de uma só vez (Nested Write)
@@ -35,13 +25,13 @@ export class PlanRepository {
   // 2. Buscar todos os Planos (Dicionário)
   async findAll() {
     return await prisma.plano.findMany({
+      where: { isActive: true },
       include: {
         tarefas: {
+          where: { isActive: true }, // 🟢 NOVO: Ignora tarefas deletadas!
           orderBy: { ordem: 'asc' }
         },
-        _count: {
-          select: { equipamentos: true } // Traz quantas máquinas usam esse plano
-        }
+        _count: { select: { equipamentos: true } }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -55,11 +45,10 @@ export class PlanRepository {
     });
   }
 
-  // 4. Deletar Plano (Vai deletar as tarefas junto se configurado em cascata no banco, ou precisamos deletar manual)
   async delete(id: string) {
-    // Apaga as tarefas filhas primeiro por segurança
-    await prisma.tarefa.deleteMany({ where: { planos_idplanos: id } });
-    // Apaga o plano pai
-    return await prisma.plano.delete({ where: { idplanos: id } });
+    return await prisma.plano.update({
+      where: { idplanos: id },
+      data: { isActive: false }
+    });
   }
 }
