@@ -926,6 +926,7 @@ var prisma = new _prisma_client.PrismaClient();
 var DashboardRepository = class {
 	async getGlobalKPIs(filters) {
 		try {
+			console.log("🔍 [DEBUG] Filtros recebidos:", filters);
 			const whereEquipamento = { isActive: true };
 			if (filters?.equipamentoId) whereEquipamento.idequipamentos = filters.equipamentoId;
 			else if (filters?.setorId) whereEquipamento.setorId = filters.setorId;
@@ -937,6 +938,7 @@ var DashboardRepository = class {
 					data_instalacao: true
 				}
 			});
+			console.log(`🔍 [DEBUG] Equipamentos encontrados no filtro: ${equipamentos.length}`);
 			if (equipamentos.length === 0) return {
 				success: true,
 				data: {
@@ -955,6 +957,7 @@ var DashboardRepository = class {
 					data_hora_reparo: true
 				}
 			});
+			console.log(`🔍 [DEBUG] Falhas encontradas para este filtro: ${falhas.length}`);
 			const agora = /* @__PURE__ */ new Date();
 			let tempoTotalHoras = 0;
 			equipamentos.forEach((eq) => {
@@ -971,9 +974,13 @@ var DashboardRepository = class {
 			});
 			const totalFalhas = falhas.length;
 			const uptimeTotalHoras = Math.max(0, tempoTotalHoras - downtimeTotalHoras);
+			console.log("🔍 [DEBUG] tempoTotalHoras (Soma da vida dos equipamentos):", tempoTotalHoras);
+			console.log("🔍 [DEBUG] downtimeTotalHoras (Soma das paradas):", downtimeTotalHoras);
+			console.log("🔍 [DEBUG] totalFalhas:", totalFalhas);
 			const mtbf = totalFalhas > 0 ? uptimeTotalHoras / totalFalhas : uptimeTotalHoras;
 			const mttr = totalFalhas > 0 ? downtimeTotalHoras / totalFalhas : 0;
 			const disponibilidade = mtbf + mttr > 0 ? mtbf / (mtbf + mttr) * 100 : 100;
+			console.log("🔍 [DEBUG] MTBF Calculado:", mtbf);
 			return {
 				success: true,
 				data: {
