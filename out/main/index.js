@@ -992,7 +992,6 @@ var DashboardRepository = class {
 				}
 			};
 		} catch (error) {
-			console.error("❌ Erro no cálculo de KPIs:", error);
 			return {
 				success: false,
 				error: error.message

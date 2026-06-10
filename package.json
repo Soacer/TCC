@@ -4,9 +4,10 @@
   "main": "./out/main/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "electron-vite dev",
+    "dev": "npm run clean && electron-vite dev",
     "build": "electron-vite build",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "clean": "if exist dist rd /s /q dist & if exist out rd /s /q out & if exist .vite rd /s /q .vite"  
   },
   "prisma": {
     "seed": "npx --yes tsx prisma/seed.ts"
@@ -23,6 +24,7 @@
     "electron": "^41.6.1",
     "electron-vite": "^5.0.0",
     "prisma": "^6.19.3",
+    "rimraf": "^6.1.3",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3",
     "vite": "^8.0.13"

@@ -9,7 +9,6 @@ const prisma = new PrismaClient();
 export class DashboardRepository implements IDashboardRepository {
   async getGlobalKPIs(filters?: DashboardFilters) {
     try {
-      console.log("🔍 [DEBUG] Filtros recebidos:", filters);
 
       // 1. Construir o filtro de Equipamentos baseado na hierarquia
       const whereEquipamento: any = { isActive: true };
@@ -27,10 +26,6 @@ export class DashboardRepository implements IDashboardRepository {
         where: whereEquipamento,
         select: { idequipamentos: true, data_instalacao: true },
       });
-
-      console.log(
-        `🔍 [DEBUG] Equipamentos encontrados no filtro: ${equipamentos.length}`,
-      );
 
       if (equipamentos.length === 0) {
         return {
@@ -52,10 +47,6 @@ export class DashboardRepository implements IDashboardRepository {
         where: { equipamento_id: { in: eqIds } },
         select: { data_hora_falha: true, data_hora_reparo: true },
       });
-
-      console.log(
-        `🔍 [DEBUG] Falhas encontradas para este filtro: ${falhas.length}`,
-      );
 
       // 4. Cálculos
       const agora = new Date();
@@ -82,23 +73,12 @@ export class DashboardRepository implements IDashboardRepository {
         tempoTotalHoras - downtimeTotalHoras,
       );
 
-      console.log(
-        "🔍 [DEBUG] tempoTotalHoras (Soma da vida dos equipamentos):",
-        tempoTotalHoras,
-      );
-      console.log(
-        "🔍 [DEBUG] downtimeTotalHoras (Soma das paradas):",
-        downtimeTotalHoras,
-      );
-      console.log("🔍 [DEBUG] totalFalhas:", totalFalhas);
-
       // Evitar divisão por zero
       const mtbf =
         totalFalhas > 0 ? uptimeTotalHoras / totalFalhas : uptimeTotalHoras;
       const mttr = totalFalhas > 0 ? downtimeTotalHoras / totalFalhas : 0;
       const disponibilidade =
         mtbf + mttr > 0 ? (mtbf / (mtbf + mttr)) * 100 : 100;
-      console.log("🔍 [DEBUG] MTBF Calculado:", mtbf);
       return {
         success: true,
         data: {
@@ -110,7 +90,6 @@ export class DashboardRepository implements IDashboardRepository {
         },
       };
     } catch (error: any) {
-      console.error("❌ Erro no cálculo de KPIs:", error);
       return { success: false, error: error.message };
     }
   }
